@@ -20,6 +20,9 @@ dist/
 *.egg-info/
 
 # Local runtime/test artifacts
+# Local user content
+out/
+Videos/
 live_test/
 test_artifacts/
 .hf_cache/

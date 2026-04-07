@@ -1,6 +1,17 @@
-from __future__ import annotations
+﻿from __future__ import annotations
 
 from asr_cli.core.errors import ProviderDependencyError
+
+
+META_RESPONSE_MARKERS = (
+    'что было изменено',
+    'что было исправлено',
+    'альтернативный вариант',
+    'исходный вариант',
+    'вот исправленный вариант',
+    'вот отредактированный вариант',
+    'улучшенный вариант',
+)
 
 
 class OpenAICompatibleClient:
@@ -40,16 +51,49 @@ class OpenAICompatibleClient:
                 {
                     'role': 'system',
                     'content': (
-                        'You normalize Russian transcripts. '
-                        'Improve punctuation, casing, and readability without '
-                        'inventing content.'
+                        'You normalize transcript text. '
+                        'Return only the final normalized transcript text and nothing else. '
+                        'Do not add explanations, comments, bullet lists, markdown, '
+                        'headings, quotes, alternative variants, or notes about changes. '
+                        'Do not address the user. '
+                        'Preserve the original meaning. '
+                        'Fix punctuation, casing, spacing, and obvious ASR artifacts only.'
                     ),
                 },
                 {
                     'role': 'user',
-                    'content': f'Language: {language}\nText:\n{text}',
+                    'content': (
+                        f'Language: {language}\n'
+                        'Task: normalize the transcript segment below.\n'
+                        'Rules:\n'
+                        '- Output only the normalized text.\n'
+                        '- No explanations.\n'
+                        '- No markdown.\n'
+                        '- No lists.\n'
+                        '- No alternative versions.\n'
+                        '- If the text is already fine, return it as-is.\n'
+                        f'Transcript:\n{text}'
+                    ),
                 },
             ],
             **request_kwargs,
         )
-        return response.choices[0].message.content or text
+        content = response.choices[0].message.content or text
+        return self._sanitize_normalized_text(content, original_text=text)
+
+    def _sanitize_normalized_text(self, content: str, *, original_text: str) -> str:
+        normalized = content.strip()
+        lowered = normalized.lower()
+
+        if any(marker in lowered for marker in META_RESPONSE_MARKERS):
+            return original_text
+
+        if (
+            normalized.startswith('#')
+            or normalized.startswith('>')
+            or '**' in normalized
+            or '```' in normalized
+        ):
+            return original_text
+
+        return normalized or original_text

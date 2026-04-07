@@ -44,6 +44,7 @@ def test_build_app_config_uses_openrouter_env(monkeypatch, workspace_tmp) -> Non
     assert config.normalization.base_url == 'https://openrouter.ai/api/v1'
     assert config.normalization.headers == {
         'HTTP-Referer': 'https://example.test',
+        'X-OpenRouter-Title': 'asr-cli-tests',
         'X-Title': 'asr-cli-tests',
     }
     assert config.normalization.reasoning_enabled is True
@@ -65,3 +66,33 @@ def test_build_app_config_prefers_cli_llm_provider(monkeypatch, workspace_tmp) -
     )
 
     assert config.normalization.provider_id == 'deepseek'
+
+
+def test_build_app_config_sets_default_openrouter_app_name(monkeypatch, workspace_tmp) -> None:
+    env_file = workspace_tmp / '.env'
+    env_file.write_text(
+        '\n'.join(
+            [
+                'NORMALIZATION_PROVIDER=openrouter',
+                'OPENROUTER_API_KEY=test-openrouter-key',
+            ]
+        ) + '\n',
+        encoding='utf-8',
+    )
+    for key in [
+        'NORMALIZATION_PROVIDER',
+        'OPENROUTER_API_KEY',
+        'OPENROUTER_APP_NAME',
+        'OPENROUTER_HTTP_REFERER',
+    ]:
+        monkeypatch.delenv(key, raising=False)
+    monkeypatch.chdir(workspace_tmp)
+
+    config = build_app_config(
+        output_dir=Path('out'),
+        formats=[],
+    )
+
+    assert config.normalization.headers['X-OpenRouter-Title'] == 'asr-cli'
+    assert config.normalization.headers['X-Title'] == 'asr-cli'
+    assert 'HTTP-Referer' not in config.normalization.headers

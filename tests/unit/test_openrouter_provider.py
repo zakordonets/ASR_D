@@ -43,6 +43,7 @@ def test_openrouter_provider_uses_openrouter_client(monkeypatch) -> None:
         base_url='https://openrouter.ai/api/v1',
         headers={
             'HTTP-Referer': 'https://example.test',
+            'X-OpenRouter-Title': 'asr-cli-tests',
             'X-Title': 'asr-cli-tests',
         },
         reasoning_enabled=False,
@@ -58,6 +59,7 @@ def test_openrouter_provider_uses_openrouter_client(monkeypatch) -> None:
 
     assert holder['client'].api_key == 'or-key'
     assert holder['client'].base_url == 'https://openrouter.ai/api/v1'
+    assert holder['client'].headers['X-OpenRouter-Title'] == 'asr-cli-tests'
     assert holder['client'].headers['X-Title'] == 'asr-cli-tests'
     assert holder['client'].calls[0]['model'] == 'xiaomi/mimo-v2-flash'
     assert holder['client'].calls[0]['reasoning_enabled'] is False

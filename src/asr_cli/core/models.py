@@ -76,6 +76,7 @@ class JobResult:
     document: TranscriptDocument | None = None
     error: str | None = None
     output_files: list[Path] = field(default_factory=list)
+    timings: dict[str, float] = field(default_factory=dict)
 
 
 @dataclass(slots=True)
@@ -85,4 +86,4 @@ class BatchResult:
     failed: int
     skipped: int
     results: list[JobResult]
-
+    elapsed_seconds: float = 0.0

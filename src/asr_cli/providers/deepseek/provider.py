@@ -4,6 +4,7 @@ from dataclasses import replace
 
 from asr_cli.core.config import NormalizationConfig
 from asr_cli.core.models import TranscriptDocument
+from asr_cli.core.progress import ProgressListener
 from asr_cli.providers.openai_compatible.client import OpenAICompatibleClient
 
 
@@ -18,10 +19,15 @@ class DeepSeekNormalizationProvider:
         )
 
     def normalize(
-        self, document: TranscriptDocument, config: NormalizationConfig, language: str
+        self,
+        document: TranscriptDocument,
+        config: NormalizationConfig,
+        language: str,
+        progress_listener: ProgressListener | None = None,
     ) -> TranscriptDocument:
         normalized_segments = []
-        for segment in document.segments:
+        total = len(document.segments)
+        for index, segment in enumerate(document.segments, start=1):
             normalized_text = self._client.normalize_text(
                 model=config.model_name,
                 language=language,
@@ -33,6 +39,12 @@ class DeepSeekNormalizationProvider:
                     normalized_text=normalized_text,
                 )
             )
+            if progress_listener is not None:
+                progress_listener.on_stage_progress(
+                    'normalization',
+                    completed=index,
+                    total=total,
+                )
         return replace(
             document,
             segments=normalized_segments,

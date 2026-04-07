@@ -7,10 +7,12 @@ from pathlib import Path
 
 import typer
 
+from asr_cli.cli.progress import CliProgressReporter
 from asr_cli.cli.runtime import build_runner
 from asr_cli.core.config import build_app_config, load_dotenv
 from asr_cli.core.enums import JobStatus, OutputFormat
 from asr_cli.core.errors import CombineProcessingError
+from asr_cli.io.inputs import discover_media_files
 
 app = typer.Typer(help='Transcribe and diarize audio/video files.')
 providers_app = typer.Typer(help='Provider diagnostics and listing.')
@@ -77,6 +79,72 @@ def _module_available(name: str) -> bool:
         return False
 
 
+def _formats_label(formats: list[OutputFormat]) -> str:
+    return ', '.join(fmt.value for fmt in formats)
+
+
+def _normalization_label(config) -> str:
+    if not config.normalization.enabled:
+        return 'disabled'
+    return (
+        f"enabled ({config.normalization.provider_id}:{config.normalization.model_name})"
+    )
+
+
+def _format_duration(seconds: float) -> str:
+    if seconds < 60:
+        return f'{seconds:.2f}s'
+    minutes, remainder = divmod(seconds, 60)
+    if minutes < 60:
+        return f'{int(minutes)}m {remainder:.1f}s'
+    hours, minutes = divmod(int(minutes), 60)
+    return f'{hours}h {minutes}m {remainder:.1f}s'
+
+
+def _format_timings(timings: dict[str, float]) -> str:
+    order = ['preprocess', 'transcription', 'diarization', 'normalization', 'combine', 'export', 'total']
+    parts = [
+        f'{stage}={_format_duration(timings[stage])}'
+        for stage in order
+        if stage in timings
+    ]
+    extras = [
+        f'{stage}={_format_duration(seconds)}'
+        for stage, seconds in timings.items()
+        if stage not in order
+    ]
+    return ', '.join(parts + extras)
+
+
+def _print_timings(timings: dict[str, float]) -> None:
+    if not timings:
+        return
+    typer.echo(f'Timings: {_format_timings(timings)}')
+
+
+def _print_start_status(kind: str, config, *, target: str, count: int | None = None) -> None:
+    typer.echo(f'Starting {kind}')
+    typer.echo(f'Target: {target}')
+    if count is not None:
+        typer.echo(f'Items: {count}')
+    typer.echo(f'ASR: {config.asr.provider_id}')
+    typer.echo(
+        f"Diarization: {'enabled (' + config.diarization.provider_id + ')' if config.diarization.enabled else 'disabled'}"
+    )
+    typer.echo(f'Normalization: {_normalization_label(config)}')
+    typer.echo(f'Formats: {_formats_label(config.export.formats)}')
+    typer.echo(f'Output dir: {config.export.output_dir}')
+
+
+def _print_batch_job_status(result) -> None:
+    path_label = str(result.input_path) if result.input_path is not None else '<unknown>'
+    timing_suffix = f' ({_format_timings(result.timings)})' if result.timings else ''
+    if result.status == JobStatus.SUCCEEDED:
+        typer.echo(f'[OK] {path_label}{timing_suffix}')
+    else:
+        typer.echo(f'[FAILED] {path_label}: {result.error}{timing_suffix}', err=True)
+
+
 @app.command()
 def transcribe(
     input_path: Path = typer.Argument(..., exists=False),
@@ -105,13 +173,21 @@ def transcribe(
         llm_provider=llm_provider,
         config_file=config_file,
     )
-    result = runner.transcribe_file(input_path, config)
+    _print_start_status('transcription', config, target=str(input_path))
+    with CliProgressReporter() as progress_reporter:
+        result = runner.transcribe_file(
+            input_path,
+            config,
+            progress_listener=progress_reporter,
+        )
     if result.status == JobStatus.SUCCEEDED:
         typer.echo(f'OK: {input_path}')
+        _print_timings(result.timings)
         for output_file in result.output_files:
             typer.echo(str(output_file))
         return
     typer.echo(result.error or 'transcription failed', err=True)
+    _print_timings(result.timings)
     raise typer.Exit(code=1)
 
 
@@ -143,13 +219,20 @@ def combine(
         llm_provider=llm_provider,
         config_file=config_file,
     )
+    _print_start_status('combine', config, target='multiple files', count=len(input_paths))
     try:
-        result = runner.combine_files(input_paths, config)
+        with CliProgressReporter() as progress_reporter:
+            result = runner.combine_files(
+                input_paths,
+                config,
+                progress_listener=progress_reporter,
+            )
     except CombineProcessingError as exc:
         typer.echo(f'Combine failed: {exc}', err=True)
         raise typer.Exit(code=1) from exc
     if result.status == JobStatus.SUCCEEDED:
         typer.echo('OK: combined')
+        _print_timings(result.timings)
         for output_file in result.output_files:
             typer.echo(str(output_file))
 
@@ -186,9 +269,17 @@ def batch(
         llm_provider=llm_provider,
         config_file=config_file,
     )
-    result = runner.batch_folder(folder, config)
+    files = discover_media_files(folder, recursive=config.recursive)
+    _print_start_status('batch', config, target=str(folder), count=len(files))
+    with CliProgressReporter() as progress_reporter:
+        result = runner.batch_folder(
+            folder,
+            config,
+            on_job_complete=_print_batch_job_status,
+            progress_listener=progress_reporter,
+        )
     typer.echo(
-        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed}'
+        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed} Elapsed={_format_duration(result.elapsed_seconds)}'
     )
     if result.failed and not continue_on_error:
         raise typer.Exit(code=1)

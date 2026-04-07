@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 import shutil
 import uuid
@@ -9,6 +9,7 @@ import pytest
 
 from asr_cli.core.config import ASRConfig, DiarizationConfig, NormalizationConfig
 from asr_cli.core.models import PreparedMedia, SpeakerTurn, TranscriptDocument, TranscriptSegment
+from asr_cli.core.progress import ProgressListener
 from asr_cli.core.registry import ProviderRegistry
 from asr_cli.pipeline.orchestrator import PipelineRunner
 
@@ -37,7 +38,11 @@ class FakeASRProvider:
         self.config = config
 
     def transcribe(
-        self, media: PreparedMedia, config: ASRConfig, language: str
+        self,
+        media: PreparedMedia,
+        config: ASRConfig,
+        language: str,
+        progress_listener: ProgressListener | None = None,
     ) -> TranscriptDocument:
         if 'bad' in media.original_path.stem:
             raise RuntimeError('fake asr failure')
@@ -84,12 +89,24 @@ class FakeNormalizationProvider:
         self.config = config
 
     def normalize(
-        self, document: TranscriptDocument, config: NormalizationConfig, language: str
+        self,
+        document: TranscriptDocument,
+        config: NormalizationConfig,
+        language: str,
+        progress_listener: ProgressListener | None = None,
     ) -> TranscriptDocument:
         normalized_segments = [
             replace(segment, normalized_text=segment.text.upper())
             for segment in document.segments
         ]
+        if progress_listener is not None:
+            total = len(document.segments)
+            for index, _segment in enumerate(document.segments, start=1):
+                progress_listener.on_stage_progress(
+                    'normalization',
+                    completed=index,
+                    total=total,
+                )
         return replace(
             document,
             segments=normalized_segments,

@@ -16,6 +16,7 @@ class ASRConfig:
     backend: str = 'onnx-cpu'
     longform_mode: str = 'auto'
     longform_threshold_seconds: float = 25.0
+    longform_chunk_seconds: float = 300.0
 
 
 @dataclass(slots=True)
@@ -108,11 +109,13 @@ def _load_from_env() -> dict:
             'api_key': os.getenv('OPENROUTER_API_KEY'),
             'base_url': os.getenv('OPENROUTER_BASE_URL') or 'https://openrouter.ai/api/v1',
             'model_name': os.getenv('OPENROUTER_MODEL') or 'xiaomi/mimo-v2-flash',
+            'app_name': os.getenv('OPENROUTER_APP_NAME') or 'asr-cli',
             'headers': {
                 key: value
                 for key, value in {
                     'HTTP-Referer': os.getenv('OPENROUTER_HTTP_REFERER'),
-                    'X-Title': os.getenv('OPENROUTER_APP_NAME'),
+                    'X-OpenRouter-Title': os.getenv('OPENROUTER_APP_NAME') or 'asr-cli',
+                    'X-Title': os.getenv('OPENROUTER_APP_NAME') or 'asr-cli',
                 }.items()
                 if value
             },
@@ -174,6 +177,9 @@ def build_app_config(
         ),
         longform_threshold_seconds=file_config.get('asr', {}).get(
             'longform_threshold_seconds', defaults_asr.longform_threshold_seconds
+        ),
+        longform_chunk_seconds=file_config.get('asr', {}).get(
+            'longform_chunk_seconds', defaults_asr.longform_chunk_seconds
         ),
     )
     diarization_cfg = DiarizationConfig(

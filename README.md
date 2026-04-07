@@ -20,6 +20,7 @@ The project is built around a provider-based architecture:
   - folder batch processing
 - Batch-safe execution: one bad file does not stop the whole folder run
 - Provider selection via CLI, config file, or `.env`
+- Runtime status output for `transcribe`, `combine`, and `batch`
 - Windows-first implementation with CPU-first defaults
 - Automated tests for pipeline, exporters, config resolution, and provider selection
 
@@ -79,6 +80,21 @@ $env:PYTHONPATH='src'
 python -m asr_cli transcribe .\sample.wav --output-dir .\out
 ```
 
+Example status output:
+
+```text
+Starting transcription
+Target: .\sample.wav
+ASR: gigaam
+Diarization: enabled (pyannote)
+Normalization: disabled
+Formats: txt, json
+Output dir: out
+OK: .\sample.wav
+out\sample.txt
+out\sample.json
+```
+
 Transcribe with all output formats:
 
 ```powershell
@@ -116,6 +132,23 @@ $env:PYTHONPATH='src'
 python -m asr_cli batch .\media --output-dir .\out --json --continue-on-error
 ```
 
+Example status output:
+
+```text
+Starting batch
+Target: .\media
+Items: 3
+ASR: gigaam
+Diarization: enabled (pyannote)
+Normalization: disabled
+Formats: json
+Output dir: out
+[OK] .\media\a.wav
+[FAILED] .\media\broken.wav: ...
+[OK] .\media\c.wav
+Processed=3 Succeeded=2 Failed=1
+```
+
 ## Configuration
 
 Configuration sources are applied in this priority order:
@@ -148,6 +181,8 @@ Important variables:
 - `DEEPSEEK_API_KEY`: required when using `deepseek`
 - `OPENROUTER_API_KEY`: required when using `openrouter`
 - `OPENROUTER_MODEL`: default OpenRouter model, e.g. `xiaomi/mimo-v2-flash`
+- `OPENROUTER_APP_NAME`: value used by OpenRouter to populate the `App` field in request logs; default is `asr-cli`
+- `OPENROUTER_HTTP_REFERER`: optional site URL for OpenRouter attribution
 - `OPENROUTER_REASONING_ENABLED`: usually keep `false` for normalization
 
 Example:
@@ -162,6 +197,10 @@ OPENROUTER_APP_NAME=asr-cli
 OPENROUTER_REASONING_ENABLED=false
 ```
 
+OpenRouter attribution:
+- `OPENROUTER_APP_NAME` is sent as `X-OpenRouter-Title` and `X-Title`
+- this is what OpenRouter uses to populate the `App` field in request logs
+- `OPENROUTER_HTTP_REFERER` is optional but recommended
 ### Config File Example
 
 ```toml
