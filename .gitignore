@@ -1,0 +1,38 @@
+# Secrets and local configuration
+.env
+
+# Virtual environments
+.venv/
+venv/
+
+# Python caches
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+
+# Local runtime/test artifacts
+live_test/
+test_artifacts/
+.hf_cache/
+.cache/
+.pip_tmp/
+.pytest_tmp/
+.smoke_tmp*/
+pytest-cache-files-*/
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
