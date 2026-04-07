@@ -9,7 +9,7 @@ description = "CLI utility for transcription, diarization, and optional LLM norm
 readme = "README.md"
 requires-python = ">=3.10"
 authors = [
-  { name = "Codex" }
+  { name = "Aleksandr Zakordonets" }
 ]
 dependencies = [
   "typer>=0.12,<1.0",
