@@ -12,6 +12,7 @@ authors = [
   { name = "Aleksandr Zakordonets" }
 ]
 dependencies = [
+  "gigaam>=0.1.0",
   "typer>=0.12,<1.0",
   "rich>=13,<15",
 ]

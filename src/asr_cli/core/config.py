@@ -130,6 +130,7 @@ def build_app_config(
     formats: list[OutputFormat],
     recursive: bool = False,
     continue_on_error: bool = True,
+    diarization_enabled: bool | None = None,
     normalize: bool = False,
     apply_normalization_to_subtitles: bool = False,
     asr_provider: str = 'gigaam',
@@ -184,7 +185,13 @@ def build_app_config(
     )
     diarization_cfg = DiarizationConfig(
         provider_id=diarizer_provider,
-        enabled=file_config.get('diarization', {}).get('enabled', defaults_diarization.enabled),
+        enabled=(
+            diarization_enabled
+            if diarization_enabled is not None
+            else file_config.get('diarization', {}).get(
+                'enabled', defaults_diarization.enabled
+            )
+        ),
         hf_token=file_config.get('diarization', {}).get('hf_token')
         or env_config['diarization']['hf_token'],
         model_name=file_config.get('diarization', {}).get(
@@ -218,3 +225,4 @@ def build_app_config(
         normalization=normalization_cfg,
         export=ExportConfig(output_dir=output_dir, formats=formats),
     )
+

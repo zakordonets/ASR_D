@@ -254,3 +254,29 @@ def test_batch_reports_progress(fake_runner, workspace_tmp) -> None:
     assert ('batch_started', 2) in listener.events
     batch_advanced = [event for event in listener.events if event[0] == 'batch_advanced']
     assert len(batch_advanced) == 2
+
+
+def test_transcribe_cli_disables_diarization(fake_runner, monkeypatch, workspace_tmp) -> None:
+    monkeypatch.setattr('asr_cli.cli.main.build_runner', lambda: fake_runner)
+    input_path = _write_media_file(workspace_tmp / 'sample.wav')
+    output_dir = workspace_tmp / 'out'
+
+    result = cli_runner.invoke(
+        app,
+        [
+            'transcribe',
+            str(input_path),
+            '--output-dir',
+            str(output_dir),
+            '--json',
+            '--no-diarization',
+            '--asr',
+            'fake-asr',
+        ],
+    )
+
+    assert result.exit_code == 0, result.stdout
+    assert 'Diarization: disabled' in result.stdout
+    payload = json.loads((output_dir / 'sample.json').read_text(encoding='utf-8'))
+    assert all(segment['speaker'] is None for segment in payload['segments'])
+

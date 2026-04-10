@@ -96,3 +96,21 @@ def test_build_app_config_sets_default_openrouter_app_name(monkeypatch, workspac
     assert config.normalization.headers['X-OpenRouter-Title'] == 'asr-cli'
     assert config.normalization.headers['X-Title'] == 'asr-cli'
     assert 'HTTP-Referer' not in config.normalization.headers
+
+
+def test_build_app_config_prefers_cli_no_diarization_over_config_file(workspace_tmp) -> None:
+    config_file = workspace_tmp / 'config.toml'
+    config_file.write_text(
+        '[diarization]\nenabled = true\n',
+        encoding='utf-8',
+    )
+
+    config = build_app_config(
+        output_dir=Path('out'),
+        formats=[],
+        diarization_enabled=False,
+        config_file=config_file,
+    )
+
+    assert config.diarization.enabled is False
+
