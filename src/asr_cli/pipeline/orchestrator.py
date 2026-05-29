@@ -11,7 +11,7 @@ from asr_cli.core.config import AppConfig
 from asr_cli.core.enums import JobStatus, OutputFormat
 from asr_cli.core.errors import CombineProcessingError
 from asr_cli.core.models import BatchResult, JobResult, TranscriptDocument
-from asr_cli.core.progress import ProgressListener
+from asr_cli.core.progress import NullProgressListener, ProgressListener
 from asr_cli.core.registry import ProviderRegistry
 from asr_cli.io.exporters.json import JsonWriter
 from asr_cli.io.exporters.srt import SrtWriter
@@ -38,6 +38,7 @@ class PipelineRunner:
             OutputFormat.SRT: SrtWriter(),
             OutputFormat.VTT: VttWriter(),
         }
+        self._provider_cache: dict[tuple[str, str], object] = {}
 
     def transcribe_file(
         self,
@@ -45,7 +46,7 @@ class PipelineRunner:
         config: AppConfig,
         progress_listener: ProgressListener | None = None,
     ) -> JobResult:
-        progress = progress_listener or ProgressListener()
+        progress = progress_listener or NullProgressListener()
         timings: dict[str, float] = {}
         try:
             source_path = ensure_supported_media_file(input_path)
@@ -101,7 +102,7 @@ class PipelineRunner:
         config: AppConfig,
         progress_listener: ProgressListener | None = None,
     ) -> JobResult:
-        progress = progress_listener or ProgressListener()
+        progress = progress_listener or NullProgressListener()
         aggregate_timings: dict[str, float] = {}
         documents: list[TranscriptDocument] = []
         resolved_paths: list[Path] = []
@@ -190,9 +191,11 @@ class PipelineRunner:
         config: AppConfig,
         on_job_complete: Callable[[JobResult], None] | None = None,
         progress_listener: ProgressListener | None = None,
+        files: list[Path] | None = None,
     ) -> BatchResult:
-        progress = progress_listener or ProgressListener()
-        files = discover_media_files(folder, recursive=config.recursive)
+        progress = progress_listener or NullProgressListener()
+        if files is None:
+            files = discover_media_files(folder, recursive=config.recursive)
         results: list[JobResult] = []
         succeeded = 0
         failed = 0
@@ -228,7 +231,7 @@ class PipelineRunner:
             total=len(files),
             succeeded=succeeded,
             failed=failed,
-            skipped=0,
+            skipped=len(files) - succeeded - failed,
             results=results,
             elapsed_seconds=perf_counter() - batch_started,
         )
@@ -242,7 +245,7 @@ class PipelineRunner:
         progress_listener: ProgressListener | None = None,
         timings: dict[str, float] | None = None,
     ) -> TranscriptDocument:
-        progress = progress_listener or ProgressListener()
+        progress = progress_listener or NullProgressListener()
         stage_timings = timings if timings is not None else {}
         temp_root = config.export.output_dir / '.tmp'
         temp_root.mkdir(parents=True, exist_ok=True)
@@ -260,7 +263,9 @@ class PipelineRunner:
                 path=source_path,
             )
 
-            asr_provider = self.registry.create_asr(config.asr.provider_id, config.asr)
+            asr_provider = self._get_or_create_provider(
+                'asr', config.asr.provider_id, config.asr
+            )
             progress.on_stage_started('transcription', path=source_path)
             transcription_started = perf_counter()
             document = asr_provider.transcribe(
@@ -278,8 +283,8 @@ class PipelineRunner:
             )
 
             if config.diarization.enabled:
-                diarizer = self.registry.create_diarization(
-                    config.diarization.provider_id, config.diarization
+                diarizer = self._get_or_create_provider(
+                    'diarization', config.diarization.provider_id, config.diarization
                 )
                 progress.on_stage_started('diarization', path=source_path)
                 diarization_started = perf_counter()
@@ -322,8 +327,8 @@ class PipelineRunner:
         config: AppConfig,
         progress_listener: ProgressListener | None = None,
     ) -> TranscriptDocument:
-        provider = self.registry.create_normalization(
-            config.normalization.provider_id, config.normalization
+        provider = self._get_or_create_provider(
+            'normalization', config.normalization.provider_id, config.normalization
         )
         return provider.normalize(
             document,
@@ -331,6 +336,24 @@ class PipelineRunner:
             config.language,
             progress_listener=progress_listener,
         )
+
+    def _get_or_create_provider(
+        self, kind: str, provider_id: str, config: object
+    ) -> object:
+        cache_key = (kind, provider_id)
+        cached = self._provider_cache.get(cache_key)
+        if cached is not None:
+            return cached
+        if kind == 'asr':
+            provider = self.registry.create_asr(provider_id, config)
+        elif kind == 'diarization':
+            provider = self.registry.create_diarization(provider_id, config)
+        elif kind == 'normalization':
+            provider = self.registry.create_normalization(provider_id, config)
+        else:
+            raise ValueError(f'Unknown provider kind: {kind}')
+        self._provider_cache[cache_key] = provider
+        return provider
 
     def _run_export(
         self,
@@ -342,7 +365,7 @@ class PipelineRunner:
         timings: dict[str, float],
         progress_path: Path | None = None,
     ) -> list[Path]:
-        progress = progress_listener or ProgressListener()
+        progress = progress_listener or NullProgressListener()
         progress.on_stage_started(
             'export',
             path=progress_path,
@@ -376,10 +399,18 @@ class PipelineRunner:
         config.export.output_dir.mkdir(parents=True, exist_ok=True)
         output_files: list[Path] = []
         total = len(config.export.formats)
+        use_normalized = (
+            config.normalization.enabled and config.normalization.apply_to_subtitles
+        )
         for index, output_format in enumerate(config.export.formats, start=1):
             writer = self._writers[output_format]
             destination = config.export.output_dir / f'{basename}.{output_format.value}'
-            output_files.append(writer.write(document, destination))
+            if output_format in (OutputFormat.SRT, OutputFormat.VTT, OutputFormat.TXT):
+                output_files.append(
+                    writer.write(document, destination, use_normalized=use_normalized)
+                )
+            else:
+                output_files.append(writer.write(document, destination))
             if progress_listener is not None:
                 progress_listener.on_stage_progress(
                     'export',

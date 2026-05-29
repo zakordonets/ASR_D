@@ -7,23 +7,25 @@ from typing import Any
 from asr_cli.core.errors import ProviderError
 
 
-ProviderFactory = Callable[[Any], Any]
+ASRFactory = Callable[[Any], Any]
+DiarizationFactory = Callable[[Any], Any]
+NormalizationFactory = Callable[[Any], Any]
 
 
 @dataclass
 class ProviderRegistry:
-    asr_factories: dict[str, ProviderFactory] = field(default_factory=dict)
-    diarization_factories: dict[str, ProviderFactory] = field(default_factory=dict)
-    normalization_factories: dict[str, ProviderFactory] = field(default_factory=dict)
+    asr_factories: dict[str, ASRFactory] = field(default_factory=dict)
+    diarization_factories: dict[str, DiarizationFactory] = field(default_factory=dict)
+    normalization_factories: dict[str, NormalizationFactory] = field(default_factory=dict)
 
-    def register_asr(self, provider_id: str, factory: ProviderFactory) -> None:
+    def register_asr(self, provider_id: str, factory: ASRFactory) -> None:
         self.asr_factories[provider_id] = factory
 
-    def register_diarization(self, provider_id: str, factory: ProviderFactory) -> None:
+    def register_diarization(self, provider_id: str, factory: DiarizationFactory) -> None:
         self.diarization_factories[provider_id] = factory
 
     def register_normalization(
-        self, provider_id: str, factory: ProviderFactory
+        self, provider_id: str, factory: NormalizationFactory
     ) -> None:
         self.normalization_factories[provider_id] = factory
 
@@ -37,7 +39,7 @@ class ProviderRegistry:
         return self._create(self.normalization_factories, provider_id, config)
 
     def _create(
-        self, factories: dict[str, ProviderFactory], provider_id: str, config: Any
+        self, factories: dict[str, Callable[[Any], Any]], provider_id: str, config: Any
     ) -> Any:
         try:
             factory = factories[provider_id]

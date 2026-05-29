@@ -13,6 +13,7 @@ from asr_cli.core.config import build_app_config, load_dotenv
 from asr_cli.core.enums import JobStatus, OutputFormat
 from asr_cli.core.errors import CombineProcessingError
 from asr_cli.io.inputs import discover_media_files
+from asr_cli.utils.timecodes import format_duration
 
 app = typer.Typer(help='Transcribe and diarize audio/video files.')
 providers_app = typer.Typer(help='Provider diagnostics and listing.')
@@ -93,25 +94,15 @@ def _normalization_label(config) -> str:
     )
 
 
-def _format_duration(seconds: float) -> str:
-    if seconds < 60:
-        return f'{seconds:.2f}s'
-    minutes, remainder = divmod(seconds, 60)
-    if minutes < 60:
-        return f'{int(minutes)}m {remainder:.1f}s'
-    hours, minutes = divmod(int(minutes), 60)
-    return f'{hours}h {minutes}m {remainder:.1f}s'
-
-
 def _format_timings(timings: dict[str, float]) -> str:
     order = ['preprocess', 'transcription', 'diarization', 'normalization', 'combine', 'export', 'total']
     parts = [
-        f'{stage}={_format_duration(timings[stage])}'
+        f'{stage}={format_duration(timings[stage])}'
         for stage in order
         if stage in timings
     ]
     extras = [
-        f'{stage}={_format_duration(seconds)}'
+        f'{stage}={format_duration(seconds)}'
         for stage, seconds in timings.items()
         if stage not in order
     ]
@@ -285,9 +276,10 @@ def batch(
             config,
             on_job_complete=_print_batch_job_status,
             progress_listener=progress_reporter,
+            files=files,
         )
     typer.echo(
-        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed} Elapsed={_format_duration(result.elapsed_seconds)}'
+        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed} Elapsed={format_duration(result.elapsed_seconds)}'
     )
     if result.failed and not continue_on_error:
         raise typer.Exit(code=1)

@@ -11,7 +11,7 @@ def to_jsonable(value: Any) -> Any:
         return to_jsonable(asdict(value))
     if isinstance(value, dict):
         return {key: to_jsonable(item) for key, item in value.items()}
-    if isinstance(value, list):
+    if isinstance(value, (list, tuple, set)):
         return [to_jsonable(item) for item in value]
     if isinstance(value, Path):
         return str(value)

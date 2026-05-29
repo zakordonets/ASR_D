@@ -24,12 +24,20 @@ def test_exporters_write_expected_formats(workspace_tmp) -> None:
     )
 
     txt_path = TxtWriter().write(document, workspace_tmp / 'demo.txt')
+    txt_norm_path = TxtWriter().write(
+        document, workspace_tmp / 'demo_norm.txt', use_normalized=True
+    )
     json_path = JsonWriter().write(document, workspace_tmp / 'demo.json')
     srt_path = SrtWriter().write(document, workspace_tmp / 'demo.srt')
+    srt_norm_path = SrtWriter().write(
+        document, workspace_tmp / 'demo_norm.srt', use_normalized=True
+    )
     vtt_path = VttWriter().write(document, workspace_tmp / 'demo.vtt')
 
-    assert txt_path.read_text(encoding='utf-8') == '[SPEAKER_00] HELLO\n'
+    assert txt_path.read_text(encoding='utf-8') == '[SPEAKER_00] hello\n'
+    assert txt_norm_path.read_text(encoding='utf-8') == '[SPEAKER_00] HELLO\n'
     payload = json.loads(json_path.read_text(encoding='utf-8'))
     assert payload['segments'][0]['normalized_text'] == 'HELLO'
     assert '00:00:00,000 --> 00:00:01,200' in srt_path.read_text(encoding='utf-8')
+    assert 'HELLO' in srt_norm_path.read_text(encoding='utf-8')
     assert vtt_path.read_text(encoding='utf-8').startswith('WEBVTT')

@@ -5,11 +5,11 @@ from types import SimpleNamespace
 
 from asr_cli.core.config import ASRConfig
 from asr_cli.core.models import PreparedMedia
-from asr_cli.core.progress import ProgressListener
+from asr_cli.core.progress import NullProgressListener
 from asr_cli.providers.gigaam.provider import GigaAMASRProvider
 
 
-class RecordingProgressListener(ProgressListener):
+class RecordingProgressListener(NullProgressListener):
     def __init__(self) -> None:
         self.events = []
 

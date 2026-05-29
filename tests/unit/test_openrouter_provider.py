@@ -21,6 +21,19 @@ class StubClient:
         )
         return text.upper()
 
+    def normalize_texts(self, *, model, language, texts, reasoning_enabled=None) -> list[str]:
+        results = []
+        for text in texts:
+            results.append(
+                self.normalize_text(
+                    model=model,
+                    language=language,
+                    text=text,
+                    reasoning_enabled=reasoning_enabled,
+                )
+            )
+        return results
+
 
 def test_openrouter_provider_uses_openrouter_client(monkeypatch) -> None:
     holder = {}

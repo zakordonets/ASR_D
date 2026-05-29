@@ -5,6 +5,7 @@ from pathlib import Path
 
 from asr_cli.core.enums import JobStatus
 from asr_cli.core.progress import ProgressListener
+from asr_cli.utils.timecodes import format_duration
 
 
 class CliProgressReporter(ProgressListener):
@@ -201,7 +202,7 @@ class CliProgressReporter(ProgressListener):
             return
         description = f'{path.name}: {status.value}'
         if elapsed_seconds is not None:
-            description = f'{description} ({self._format_duration(elapsed_seconds)})'
+            description = f'{description} ({format_duration(elapsed_seconds)})'
         if error:
             description = f'{description} ({error})'
         self._progress.update(
@@ -220,7 +221,7 @@ class CliProgressReporter(ProgressListener):
     ) -> str:
         label = f'{self._stage_label(stage, path)} done'
         if elapsed_seconds is not None:
-            return f'{label} ({self._format_duration(elapsed_seconds)})'
+            return f'{label} ({format_duration(elapsed_seconds)})'
         return label
 
     def _stage_label(self, stage: str, path: Path | None) -> str:
@@ -236,12 +237,3 @@ class CliProgressReporter(ProgressListener):
         if path is None:
             return label
         return f'{label}: {path.name}'
-
-    def _format_duration(self, seconds: float) -> str:
-        if seconds < 60:
-            return f'{seconds:.2f}s'
-        minutes, remainder = divmod(seconds, 60)
-        if minutes < 60:
-            return f'{int(minutes)}m {remainder:.1f}s'
-        hours, minutes = divmod(int(minutes), 60)
-        return f'{hours}h {minutes}m {remainder:.1f}s'

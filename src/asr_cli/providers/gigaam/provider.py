@@ -66,7 +66,9 @@ class GigaAMASRProvider:
                 result = self._model.transcribe(
                     str(media.prepared_path), word_timestamps=True
                 )
-                segments = self._parse_shortform_result(result)
+                segments = self._parse_shortform_result(
+                    result, duration_seconds=media.duration_seconds
+                )
                 longform_metadata = {
                     'longform_chunked': False,
                     'longform_chunk_count': 1,
@@ -160,7 +162,9 @@ class GigaAMASRProvider:
                 )
             for index, chunk in enumerate(chunks, start=1):
                 result = self._model.transcribe(str(chunk.path), word_timestamps=True)
-                chunk_segments = self._parse_shortform_result(result)
+                chunk_segments = self._parse_shortform_result(
+                    result, duration_seconds=chunk.duration_seconds
+                )
                 segments.extend(
                     self._offset_segments(chunk_segments, offset_seconds=chunk.offset_seconds)
                 )
@@ -276,9 +280,11 @@ class GigaAMASRProvider:
         )
         return any(marker in message for marker in fallback_markers)
 
-    def _parse_shortform_result(self, result: object) -> list[TranscriptSegment]:
+    def _parse_shortform_result(
+        self, result: object, *, duration_seconds: float = 0.0
+    ) -> list[TranscriptSegment]:
         if isinstance(result, str):
-            return [TranscriptSegment(start=0.0, end=0.0, text=result, raw_text=result)]
+            return [TranscriptSegment(start=0.0, end=duration_seconds, text=result, raw_text=result)]
         words = getattr(result, "words", None)
         text = str(getattr(result, "text", "")).strip()
         if words:
@@ -302,5 +308,5 @@ class GigaAMASRProvider:
                 )
             ]
         if text:
-            return [TranscriptSegment(start=0.0, end=0.0, text=text, raw_text=text)]
+            return [TranscriptSegment(start=0.0, end=duration_seconds, text=text, raw_text=text)]
         raise ProviderError("GigaAM returned an unsupported transcription result")

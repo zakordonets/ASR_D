@@ -87,7 +87,7 @@ def test_transcribe_single_file_outputs_all(fake_runner, monkeypatch, workspace_
     assert payload['metadata']['normalized'] is True
     assert 'timings' in payload['metadata']
     assert payload['segments'][0]['speaker'] == 'SPEAKER_00'
-    assert 'RAW SAMPLE' in (output_dir / 'sample.txt').read_text(encoding='utf-8')
+    assert 'raw sample' in (output_dir / 'sample.txt').read_text(encoding='utf-8')
 
 
 def test_combine_fail_fast_on_bad_file(fake_runner, workspace_tmp) -> None:

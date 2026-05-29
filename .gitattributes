@@ -1,0 +1,24 @@
+# Force LF line endings for all text files
+* text=auto eol=lf
+
+# Explicitly mark known text types
+*.py text eol=lf
+*.toml text eol=lf
+*.yaml text eol=lf
+*.yml text eol=lf
+*.md text eol=lf
+*.txt text eol=lf
+*.sh text eol=lf
+*.cfg text eol=lf
+*.ini text eol=lf
+*.json text eol=lf
+
+# Binary files
+*.wav binary
+*.mp3 binary
+*.m4a binary
+*.mp4 binary
+*.webm binary
+*.png binary
+*.jpg binary
+*.gif binary

@@ -92,8 +92,15 @@ def _env_bool(name: str, default: bool = False) -> bool:
     return value.strip().lower() in {'1', 'true', 'yes', 'on'}
 
 
-def _load_from_env() -> dict:
-    load_dotenv()
+def _load_from_env(config_file: Path | None = None) -> dict:
+    if config_file is not None:
+        dotenv_candidate = config_file.parent / '.env'
+        if dotenv_candidate.exists():
+            load_dotenv(dotenv_candidate)
+        else:
+            load_dotenv()
+    else:
+        load_dotenv()
     return {
         'diarization': {
             'hf_token': os.getenv('HF_TOKEN'),
@@ -142,7 +149,7 @@ def build_app_config(
     defaults_diarization = DiarizationConfig()
     defaults_normalization = NormalizationConfig()
     file_config = load_config_file(config_file)
-    env_config = _load_from_env()
+    env_config = _load_from_env(config_file)
 
     selected_llm_provider = (
         llm_provider

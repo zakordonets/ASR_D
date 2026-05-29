@@ -9,10 +9,21 @@ from asr_cli.utils.timecodes import format_vtt_timestamp
 class VttWriter:
     extension = "vtt"
 
-    def write(self, document: TranscriptDocument, destination: Path) -> Path:
+    def write(
+        self,
+        document: TranscriptDocument,
+        destination: Path,
+        *,
+        use_normalized: bool = False,
+    ) -> Path:
         blocks = ["WEBVTT"]
         for segment in document.segments:
             speaker = f"[{segment.speaker}] " if segment.speaker else ""
+            text = (
+                segment.normalized_text
+                if use_normalized and segment.normalized_text
+                else segment.text
+            )
             blocks.append(
                 "\n".join(
                     [
@@ -20,7 +31,7 @@ class VttWriter:
                             f"{format_vtt_timestamp(segment.start)} --> "
                             f"{format_vtt_timestamp(segment.end)}"
                         ),
-                        f"{speaker}{segment.text}",
+                        f"{speaker}{text}",
                     ]
                 )
             )

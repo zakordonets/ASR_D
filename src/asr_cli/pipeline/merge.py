@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 from asr_cli.core.models import SpeakerTurn, TranscriptDocument, TranscriptSegment
 
 
@@ -12,12 +14,18 @@ def assign_speakers(
 ) -> TranscriptDocument:
     if not speaker_turns:
         return document
-    for segment in document.segments:
-        segment.speaker = _best_speaker(segment, speaker_turns)
-        for word in segment.words:
-            word.speaker = segment.speaker
-    document.speaker_turns = speaker_turns
-    return document
+    updated_segments = [
+        replace(
+            segment,
+            speaker=_best_speaker(segment, speaker_turns),
+            words=[
+                replace(word, speaker=_best_speaker(segment, speaker_turns))
+                for word in segment.words
+            ],
+        )
+        for segment in document.segments
+    ]
+    return replace(document, segments=updated_segments, speaker_turns=speaker_turns)
 
 
 def _best_speaker(
