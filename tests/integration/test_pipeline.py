@@ -193,7 +193,7 @@ def test_batch_cli_prints_per_file_status(fake_runner, monkeypatch, workspace_tm
     assert '[OK]' in result.stdout
     assert 'total=' in result.stdout
     assert '[FAILED]' in (result.stdout + result.stderr)
-    assert 'Processed=2 Succeeded=1 Failed=1 Elapsed=' in result.stdout
+    assert 'Processed=2 Succeeded=1 Failed=1 Skipped=0 Elapsed=' in result.stdout
 
 
 def test_transcribe_reports_progress_stages(fake_runner, workspace_tmp) -> None:

@@ -81,6 +81,39 @@ class PipelineRunner:
                 elapsed_seconds=finalized_timings.get('total'),
             )
             return result
+        except PermissionError as exc:
+            finalized_timings = self._finalize_timings(timings)
+            error_msg = f'File locked or access denied: {exc}'
+            progress.on_file_completed(
+                input_path,
+                status=JobStatus.FAILED,
+                error=error_msg,
+                elapsed_seconds=finalized_timings.get('total'),
+            )
+            return JobResult(
+                status=JobStatus.FAILED,
+                input_path=input_path,
+                error=error_msg,
+                timings=finalized_timings,
+            )
+        except OSError as exc:
+            finalized_timings = self._finalize_timings(timings)
+            if getattr(exc, 'errno', None) == 28:
+                error_msg = f'Disk full: {exc}'
+            else:
+                error_msg = f'OS error: {exc}'
+            progress.on_file_completed(
+                input_path,
+                status=JobStatus.FAILED,
+                error=error_msg,
+                elapsed_seconds=finalized_timings.get('total'),
+            )
+            return JobResult(
+                status=JobStatus.FAILED,
+                input_path=input_path,
+                error=error_msg,
+                timings=finalized_timings,
+            )
         except Exception as exc:
             finalized_timings = self._finalize_timings(timings)
             progress.on_file_completed(
@@ -102,6 +135,12 @@ class PipelineRunner:
         config: AppConfig,
         progress_listener: ProgressListener | None = None,
     ) -> JobResult:
+        """Combine multiple files into a single transcript.
+
+        Unlike transcribe_file which returns a FAILED JobResult on error,
+        this method raises CombineProcessingError on failure because a
+        partial combine is not useful — the entire operation must succeed.
+        """
         progress = progress_listener or NullProgressListener()
         aggregate_timings: dict[str, float] = {}
         documents: list[TranscriptDocument] = []
@@ -320,6 +359,10 @@ class PipelineRunner:
             return document
         finally:
             shutil.rmtree(workspace, ignore_errors=True)
+            try:
+                temp_root.rmdir()
+            except OSError:
+                pass
 
     def _normalize_document(
         self,
@@ -340,7 +383,7 @@ class PipelineRunner:
     def _get_or_create_provider(
         self, kind: str, provider_id: str, config: object
     ) -> object:
-        cache_key = (kind, provider_id)
+        cache_key = (kind, provider_id, repr(config))
         cached = self._provider_cache.get(cache_key)
         if cached is not None:
             return cached

@@ -279,7 +279,7 @@ def batch(
             files=files,
         )
     typer.echo(
-        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed} Elapsed={format_duration(result.elapsed_seconds)}'
+        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed} Skipped={result.skipped} Elapsed={format_duration(result.elapsed_seconds)}'
     )
     if result.failed and not continue_on_error:
         raise typer.Exit(code=1)

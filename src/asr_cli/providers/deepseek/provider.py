@@ -38,6 +38,10 @@ class DeepSeekNormalizationProvider:
                 model=config.model_name,
                 language=language,
                 texts=texts,
+                reasoning_enabled=config.reasoning_enabled,
+            )
+            assert len(normalized_texts) == len(batch), (
+                f'Expected {len(batch)} normalized texts, got {len(normalized_texts)}'
             )
             for segment, norm_text in zip(batch, normalized_texts):
                 normalized_segments.append(replace(segment, normalized_text=norm_text))

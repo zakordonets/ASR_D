@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import logging
 import re
 
 from asr_cli.core.errors import ProviderDependencyError
+
+logger = logging.getLogger(__name__)
 
 
 META_RESPONSE_MARKERS = (
@@ -150,8 +153,8 @@ class OpenAICompatibleClient:
                     self._sanitize_normalized_text(normalized, original_text=original)
                     for normalized, original in zip(parsed, texts)
                 ]
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning('Batch normalization failed, falling back to individual: %s', exc)
 
         # Fallback: process individually
         return [
