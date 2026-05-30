@@ -38,7 +38,7 @@ class PipelineRunner:
             OutputFormat.SRT: SrtWriter(),
             OutputFormat.VTT: VttWriter(),
         }
-        self._provider_cache: dict[tuple[str, str], object] = {}
+        self._provider_cache: dict[tuple[str, str, str], object] = {}
 
     def transcribe_file(
         self,
@@ -302,9 +302,7 @@ class PipelineRunner:
                 path=source_path,
             )
 
-            asr_provider = self._get_or_create_provider(
-                'asr', config.asr.provider_id, config.asr
-            )
+            asr_provider = self._get_or_create_provider('asr', config.asr.provider_id, config.asr)
             progress.on_stage_started('transcription', path=source_path)
             transcription_started = perf_counter()
             document = asr_provider.transcribe(
@@ -380,9 +378,7 @@ class PipelineRunner:
             progress_listener=progress_listener,
         )
 
-    def _get_or_create_provider(
-        self, kind: str, provider_id: str, config: object
-    ) -> object:
+    def _get_or_create_provider(self, kind: str, provider_id: str, config: object) -> object:
         cache_key = (kind, provider_id, repr(config))
         cached = self._provider_cache.get(cache_key)
         if cached is not None:
@@ -442,9 +438,7 @@ class PipelineRunner:
         config.export.output_dir.mkdir(parents=True, exist_ok=True)
         output_files: list[Path] = []
         total = len(config.export.formats)
-        use_normalized = (
-            config.normalization.enabled and config.normalization.apply_to_subtitles
-        )
+        use_normalized = config.normalization.enabled and config.normalization.apply_to_subtitles
         for index, output_format in enumerate(config.export.formats, start=1):
             writer = self._writers[output_format]
             destination = config.export.output_dir / f'{basename}.{output_format.value}'
@@ -483,9 +477,7 @@ class PipelineRunner:
 
     def _finalize_timings(self, timings: dict[str, float]) -> dict[str, float]:
         finalized = {
-            stage: round(seconds, 3)
-            for stage, seconds in timings.items()
-            if stage != 'total'
+            stage: round(seconds, 3) for stage, seconds in timings.items() if stage != 'total'
         }
         finalized['total'] = round(sum(finalized.values()), 3)
         return finalized

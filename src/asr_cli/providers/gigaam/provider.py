@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+import wave
 from dataclasses import dataclass, replace
 from pathlib import Path
-import wave
 
 from asr_cli.core.config import ASRConfig
 from asr_cli.core.errors import ProviderDependencyError, ProviderError
@@ -18,7 +18,7 @@ class _AudioChunk:
 
 
 class GigaAMASRProvider:
-    provider_id = "gigaam"
+    provider_id = 'gigaam'
 
     def __init__(self, config: ASRConfig) -> None:
         self.config = config
@@ -38,12 +38,9 @@ class GigaAMASRProvider:
         language: str,
         progress_listener: ProgressListener | None = None,
     ) -> TranscriptDocument:
-        use_longform = (
-            config.longform_mode == "always"
-            or (
-                config.longform_mode == "auto"
-                and media.duration_seconds >= config.longform_threshold_seconds
-            )
+        use_longform = config.longform_mode == 'always' or (
+            config.longform_mode == 'auto'
+            and media.duration_seconds >= config.longform_threshold_seconds
         )
         try:
             if use_longform:
@@ -63,9 +60,7 @@ class GigaAMASRProvider:
                     )
                     longform_metadata['longform_fallback_reason'] = str(exc)
             else:
-                result = self._model.transcribe(
-                    str(media.prepared_path), word_timestamps=True
-                )
+                result = self._model.transcribe(str(media.prepared_path), word_timestamps=True)
                 segments = self._parse_shortform_result(
                     result, duration_seconds=media.duration_seconds
                 )
@@ -76,18 +71,18 @@ class GigaAMASRProvider:
                     'longform_backend': 'shortform',
                 }
         except Exception as exc:
-            raise ProviderError(f"GigaAM transcription failed: {exc}") from exc
+            raise ProviderError(f'GigaAM transcription failed: {exc}') from exc
 
         return TranscriptDocument(
             title=media.original_path.stem,
             language=language,
             segments=segments,
             metadata={
-                "provider": self.provider_id,
-                "model_name": config.model_name,
-                "device": config.device,
-                "backend": config.backend,
-                "longform_used": use_longform,
+                'provider': self.provider_id,
+                'model_name': config.model_name,
+                'device': config.device,
+                'backend': config.backend,
+                'longform_used': use_longform,
                 **longform_metadata,
             },
         )
@@ -210,7 +205,9 @@ class GigaAMASRProvider:
                 reader.setpos(offset_frames)
                 frames_to_read = min(frames_per_chunk, total_frames - offset_frames)
                 chunk_frames = reader.readframes(frames_to_read)
-                chunk_path = prepared_path.parent / f'{prepared_path.stem}.chunk{chunk_index:04d}.wav'
+                chunk_path = (
+                    prepared_path.parent / f'{prepared_path.stem}.chunk{chunk_index:04d}.wav'
+                )
                 with wave.open(str(chunk_path), 'wb') as writer:
                     writer.setparams(params)
                     writer.writeframes(chunk_frames)
@@ -276,7 +273,7 @@ class GigaAMASRProvider:
             'audiodecoder',
             'torchcodec',
             'could not load libtorchcodec',
-            'name \'audiodecoder\' is not defined',
+            "name 'audiodecoder' is not defined",
         )
         return any(marker in message for marker in fallback_markers)
 
@@ -284,9 +281,11 @@ class GigaAMASRProvider:
         self, result: object, *, duration_seconds: float = 0.0
     ) -> list[TranscriptSegment]:
         if isinstance(result, str):
-            return [TranscriptSegment(start=0.0, end=duration_seconds, text=result, raw_text=result)]
-        words = getattr(result, "words", None)
-        text = str(getattr(result, "text", "")).strip()
+            return [
+                TranscriptSegment(start=0.0, end=duration_seconds, text=result, raw_text=result)
+            ]
+        words = getattr(result, 'words', None)
+        text = str(getattr(result, 'text', '')).strip()
         if words:
             parsed_words = [
                 TranscriptWord(
@@ -302,11 +301,11 @@ class GigaAMASRProvider:
                 TranscriptSegment(
                     start=start,
                     end=end,
-                    text=text or " ".join(word.text for word in parsed_words),
-                    raw_text=text or " ".join(word.text for word in parsed_words),
+                    text=text or ' '.join(word.text for word in parsed_words),
+                    raw_text=text or ' '.join(word.text for word in parsed_words),
                     words=parsed_words,
                 )
             ]
         if text:
             return [TranscriptSegment(start=0.0, end=duration_seconds, text=text, raw_text=text)]
-        raise ProviderError("GigaAM returned an unsupported transcription result")
+        raise ProviderError('GigaAM returned an unsupported transcription result')

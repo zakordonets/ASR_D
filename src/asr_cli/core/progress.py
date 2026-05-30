@@ -10,8 +10,7 @@ class ProgressListener(ABC):
     """Abstract base class for progress reporting."""
 
     @abstractmethod
-    def on_batch_started(self, total: int) -> None:
-        ...
+    def on_batch_started(self, total: int) -> None: ...
 
     @abstractmethod
     def on_batch_advanced(
@@ -21,12 +20,10 @@ class ProgressListener(ABC):
         *,
         path: Path | None = None,
         status: JobStatus | None = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abstractmethod
-    def on_file_started(self, path: Path, *, operation: str) -> None:
-        ...
+    def on_file_started(self, path: Path, *, operation: str) -> None: ...
 
     @abstractmethod
     def on_stage_started(
@@ -35,8 +32,7 @@ class ProgressListener(ABC):
         *,
         path: Path | None = None,
         total: int | None = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abstractmethod
     def on_stage_progress(
@@ -46,8 +42,7 @@ class ProgressListener(ABC):
         completed: int,
         total: int,
         path: Path | None = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abstractmethod
     def on_stage_completed(
@@ -56,8 +51,7 @@ class ProgressListener(ABC):
         *,
         path: Path | None = None,
         elapsed_seconds: float | None = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
     @abstractmethod
     def on_file_completed(
@@ -67,8 +61,7 @@ class ProgressListener(ABC):
         status: JobStatus,
         error: str | None = None,
         elapsed_seconds: float | None = None,
-    ) -> None:
-        ...
+    ) -> None: ...
 
 
 class NullProgressListener(ProgressListener):

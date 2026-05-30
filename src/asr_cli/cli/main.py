@@ -89,18 +89,20 @@ def _formats_label(formats: list[OutputFormat]) -> str:
 def _normalization_label(config) -> str:
     if not config.normalization.enabled:
         return 'disabled'
-    return (
-        f"enabled ({config.normalization.provider_id}:{config.normalization.model_name})"
-    )
+    return f'enabled ({config.normalization.provider_id}:{config.normalization.model_name})'
 
 
 def _format_timings(timings: dict[str, float]) -> str:
-    order = ['preprocess', 'transcription', 'diarization', 'normalization', 'combine', 'export', 'total']
-    parts = [
-        f'{stage}={format_duration(timings[stage])}'
-        for stage in order
-        if stage in timings
+    order = [
+        'preprocess',
+        'transcription',
+        'diarization',
+        'normalization',
+        'combine',
+        'export',
+        'total',
     ]
+    parts = [f'{stage}={format_duration(timings[stage])}' for stage in order if stage in timings]
     extras = [
         f'{stage}={format_duration(seconds)}'
         for stage, seconds in timings.items()
@@ -121,9 +123,11 @@ def _print_start_status(kind: str, config, *, target: str, count: int | None = N
     if count is not None:
         typer.echo(f'Items: {count}')
     typer.echo(f'ASR: {config.asr.provider_id}')
-    typer.echo(
-        f"Diarization: {'enabled (' + config.diarization.provider_id + ')' if config.diarization.enabled else 'disabled'}"
-    )
+    if config.diarization.enabled:
+        diar_label = f'enabled ({config.diarization.provider_id})'
+    else:
+        diar_label = 'disabled'
+    typer.echo(f'Diarization: {diar_label}')
     typer.echo(f'Normalization: {_normalization_label(config)}')
     typer.echo(f'Formats: {_formats_label(config.export.formats)}')
     typer.echo(f'Output dir: {config.export.output_dir}')
@@ -279,7 +283,9 @@ def batch(
             files=files,
         )
     typer.echo(
-        f'Processed={result.total} Succeeded={result.succeeded} Failed={result.failed} Skipped={result.skipped} Elapsed={format_duration(result.elapsed_seconds)}'
+        f'Processed={result.total} Succeeded={result.succeeded}'
+        f' Failed={result.failed} Skipped={result.skipped}'
+        f' Elapsed={format_duration(result.elapsed_seconds)}'
     )
     if result.failed and not continue_on_error:
         raise typer.Exit(code=1)
@@ -304,18 +310,15 @@ def doctor() -> None:
     load_dotenv()
     runner = build_runner()
     ffmpeg_ok = runner.preprocessor.is_available()
-    typer.echo(f"ffmpeg: {'OK' if shutil.which('ffmpeg') else 'MISSING'}")
-    typer.echo(f"ffprobe: {'OK' if shutil.which('ffprobe') else 'MISSING'}")
-    typer.echo(f"preprocessor: {'OK' if ffmpeg_ok else 'CHECK PATH'}")
-    typer.echo(f"gigaam-import: {'OK' if _module_available('gigaam') else 'MISSING'}")
-    typer.echo(f"pyannote-import: {'OK' if _module_available('pyannote.audio') else 'MISSING'}")
-    typer.echo(f"openai-import: {'OK' if _module_available('openai') else 'MISSING'}")
-    typer.echo(f"HF_TOKEN: {'SET' if os.getenv('HF_TOKEN') else 'MISSING'}")
-    typer.echo(f"DEEPSEEK_API_KEY: {'SET' if os.getenv('DEEPSEEK_API_KEY') else 'MISSING'}")
-    typer.echo(f"OPENROUTER_API_KEY: {'SET' if os.getenv('OPENROUTER_API_KEY') else 'MISSING'}")
-    typer.echo(
-        f"NORMALIZATION_PROVIDER: {os.getenv('NORMALIZATION_PROVIDER') or os.getenv('LLM_PROVIDER') or 'deepseek'}"
-    )
-    typer.echo(
-        f"OPENROUTER_MODEL: {os.getenv('OPENROUTER_MODEL') or 'xiaomi/mimo-v2-flash'}"
-    )
+    typer.echo(f'ffmpeg: {"OK" if shutil.which("ffmpeg") else "MISSING"}')
+    typer.echo(f'ffprobe: {"OK" if shutil.which("ffprobe") else "MISSING"}')
+    typer.echo(f'preprocessor: {"OK" if ffmpeg_ok else "MISSING"}')
+    typer.echo(f'gigaam-import: {"OK" if _module_available("gigaam") else "MISSING"}')
+    typer.echo(f'pyannote-import: {"OK" if _module_available("pyannote.audio") else "MISSING"}')
+    typer.echo(f'openai-import: {"OK" if _module_available("openai") else "MISSING"}')
+    typer.echo(f'HF_TOKEN: {"SET" if os.getenv("HF_TOKEN") else "MISSING"}')
+    typer.echo(f'DEEPSEEK_API_KEY: {"SET" if os.getenv("DEEPSEEK_API_KEY") else "MISSING"}')
+    typer.echo(f'OPENROUTER_API_KEY: {"SET" if os.getenv("OPENROUTER_API_KEY") else "MISSING"}')
+    norm_prov = os.getenv('NORMALIZATION_PROVIDER') or os.getenv('LLM_PROVIDER') or 'deepseek'
+    typer.echo(f'NORMALIZATION_PROVIDER: {norm_prov}')
+    typer.echo(f'OPENROUTER_MODEL: {os.getenv("OPENROUTER_MODEL") or "xiaomi/mimo-v2-flash"}')

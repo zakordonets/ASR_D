@@ -7,7 +7,7 @@ from asr_cli.utils.timecodes import format_srt_timestamp
 
 
 class SrtWriter:
-    extension = "srt"
+    extension = 'srt'
 
     def write(
         self,
@@ -18,24 +18,23 @@ class SrtWriter:
     ) -> Path:
         blocks: list[str] = []
         for index, segment in enumerate(document.segments, start=1):
-            speaker = f"[{segment.speaker}] " if segment.speaker else ""
+            speaker = f'[{segment.speaker}] ' if segment.speaker else ''
             text = (
                 segment.normalized_text
                 if use_normalized and segment.normalized_text
                 else segment.text
             )
             blocks.append(
-                "\n".join(
+                '\n'.join(
                     [
                         str(index),
                         (
-                            f"{format_srt_timestamp(segment.start)} --> "
-                            f"{format_srt_timestamp(segment.end)}"
+                            f'{format_srt_timestamp(segment.start)} --> '
+                            f'{format_srt_timestamp(segment.end)}'
                         ),
-                        f"{speaker}{text}",
+                        f'{speaker}{text}',
                     ]
                 )
             )
-        destination.write_text("\n\n".join(blocks).strip() + "\n", encoding="utf-8")
+        destination.write_text('\n\n'.join(blocks).strip() + '\n', encoding='utf-8')
         return destination
-

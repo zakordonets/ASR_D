@@ -27,9 +27,7 @@ def assign_speakers(
     return replace(document, segments=updated_segments, speaker_turns=speaker_turns)
 
 
-def _best_speaker(
-    segment: TranscriptSegment, speaker_turns: list[SpeakerTurn]
-) -> str | None:
+def _best_speaker(segment: TranscriptSegment, speaker_turns: list[SpeakerTurn]) -> str | None:
     winner: str | None = None
     winner_overlap = 0.0
     for turn in speaker_turns:
@@ -38,4 +36,3 @@ def _best_speaker(
             winner = turn.speaker
             winner_overlap = overlap
     return winner
-

@@ -16,5 +16,4 @@ class ASRProvider(Protocol):
         config: ASRConfig,
         language: str,
         progress_listener: ProgressListener | None = None,
-    ) -> TranscriptDocument:
-        ...
+    ) -> TranscriptDocument: ...

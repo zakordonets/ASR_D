@@ -6,7 +6,7 @@ from asr_cli.core.models import TranscriptDocument
 
 
 class TxtWriter:
-    extension = "txt"
+    extension = 'txt'
 
     def write(
         self,
@@ -17,12 +17,12 @@ class TxtWriter:
     ) -> Path:
         lines: list[str] = []
         for segment in document.segments:
-            speaker = f"[{segment.speaker}] " if segment.speaker else ""
+            speaker = f'[{segment.speaker}] ' if segment.speaker else ''
             text = (
                 segment.normalized_text
                 if use_normalized and segment.normalized_text
                 else segment.text
             )
-            lines.append(f"{speaker}{text}")
-        destination.write_text("\n".join(lines).strip() + "\n", encoding="utf-8")
+            lines.append(f'{speaker}{text}')
+        destination.write_text('\n'.join(lines).strip() + '\n', encoding='utf-8')
         return destination

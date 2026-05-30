@@ -1,1 +1,1 @@
-﻿"""Pyannote provider."""
+"""Pyannote provider."""

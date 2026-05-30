@@ -1,1 +1,1 @@
-﻿"""DeepSeek normalization provider."""
+"""DeepSeek normalization provider."""

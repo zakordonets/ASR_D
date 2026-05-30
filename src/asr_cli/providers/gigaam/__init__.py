@@ -1,1 +1,1 @@
-﻿"""GigaAM provider."""
+"""GigaAM provider."""

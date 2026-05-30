@@ -62,11 +62,11 @@ class TranscriptDocument:
 
     @property
     def raw_text(self) -> str:
-        return "\n".join(segment.raw_text or segment.text for segment in self.segments)
+        return '\n'.join(segment.raw_text or segment.text for segment in self.segments)
 
     @property
     def normalized_text(self) -> str:
-        return "\n".join(segment.normalized_text or segment.text for segment in self.segments)
+        return '\n'.join(segment.normalized_text or segment.text for segment in self.segments)
 
 
 @dataclass(slots=True)

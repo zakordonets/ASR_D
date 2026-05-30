@@ -18,4 +18,3 @@ def to_jsonable(value: Any) -> Any:
     if isinstance(value, Enum):
         return value.value
     return value
-

@@ -1,4 +1,4 @@
-﻿from asr_cli.utils.timecodes import format_srt_timestamp, format_vtt_timestamp
+from asr_cli.utils.timecodes import format_srt_timestamp, format_vtt_timestamp
 
 
 def test_timecode_formatters() -> None:

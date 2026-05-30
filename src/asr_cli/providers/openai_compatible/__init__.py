@@ -1,1 +1,1 @@
-﻿"""OpenAI-compatible clients."""
+"""OpenAI-compatible clients."""

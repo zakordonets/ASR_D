@@ -6,7 +6,6 @@ from typing import Any
 
 from asr_cli.core.errors import ProviderError
 
-
 ASRFactory = Callable[[Any], Any]
 DiarizationFactory = Callable[[Any], Any]
 NormalizationFactory = Callable[[Any], Any]
@@ -24,9 +23,7 @@ class ProviderRegistry:
     def register_diarization(self, provider_id: str, factory: DiarizationFactory) -> None:
         self.diarization_factories[provider_id] = factory
 
-    def register_normalization(
-        self, provider_id: str, factory: NormalizationFactory
-    ) -> None:
+    def register_normalization(self, provider_id: str, factory: NormalizationFactory) -> None:
         self.normalization_factories[provider_id] = factory
 
     def create_asr(self, provider_id: str, config: Any) -> Any:

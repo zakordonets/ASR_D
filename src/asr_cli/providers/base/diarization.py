@@ -9,8 +9,4 @@ from asr_cli.core.models import PreparedMedia, SpeakerTurn
 class DiarizationProvider(Protocol):
     provider_id: str
 
-    def diarize(
-        self, media: PreparedMedia, config: DiarizationConfig
-    ) -> list[SpeakerTurn]:
-        ...
-
+    def diarize(self, media: PreparedMedia, config: DiarizationConfig) -> list[SpeakerTurn]: ...

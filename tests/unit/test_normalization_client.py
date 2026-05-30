@@ -1,4 +1,4 @@
-﻿from types import SimpleNamespace
+from types import SimpleNamespace
 
 from asr_cli.providers.openai_compatible.client import OpenAICompatibleClient
 

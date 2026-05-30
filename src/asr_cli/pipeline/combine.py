@@ -7,7 +7,7 @@ from asr_cli.core.models import SourceOffset, SpeakerTurn, TranscriptDocument, T
 
 
 def combine_documents(
-    documents: list[TranscriptDocument], source_paths: list[Path], title: str = "combined"
+    documents: list[TranscriptDocument], source_paths: list[Path], title: str = 'combined'
 ) -> TranscriptDocument:
     combined_segments: list[TranscriptSegment] = []
     combined_turns: list[SpeakerTurn] = []
@@ -31,9 +31,7 @@ def combine_documents(
             combined_segments.append(shifted_segment)
             max_end = max(max_end, shifted_segment.end)
         for turn in document.speaker_turns:
-            combined_turns.append(
-                replace(turn, start=turn.start + offset, end=turn.end + offset)
-            )
+            combined_turns.append(replace(turn, start=turn.start + offset, end=turn.end + offset))
             max_end = max(max_end, turn.end + offset)
         source_duration = max_end - offset
         source_offsets.append(
@@ -45,19 +43,19 @@ def combine_documents(
         )
         metadata_sources.append(
             {
-                "path": str(source_path),
-                "start_offset": offset,
-                "duration_seconds": source_duration,
+                'path': str(source_path),
+                'start_offset': offset,
+                'duration_seconds': source_duration,
             }
         )
         offset = max_end
 
     return TranscriptDocument(
         title=title,
-        language=documents[0].language if documents else "ru",
+        language=documents[0].language if documents else 'ru',
         segments=combined_segments,
         speaker_turns=combined_turns,
         source_offsets=source_offsets,
-        metadata={"sources": metadata_sources},
+        metadata={'sources': metadata_sources},
         warnings=[],
     )

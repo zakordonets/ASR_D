@@ -1,9 +1,10 @@
 from __future__ import annotations
 
 import os
-import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+
+import tomllib
 
 from asr_cli.core.enums import OutputFormat
 
@@ -187,9 +188,7 @@ def build_app_config(
         model_name=file_config.get('asr', {}).get('model_name', defaults_asr.model_name),
         device=file_config.get('asr', {}).get('device', defaults_asr.device),
         backend=file_config.get('asr', {}).get('backend', defaults_asr.backend),
-        longform_mode=file_config.get('asr', {}).get(
-            'longform_mode', defaults_asr.longform_mode
-        ),
+        longform_mode=file_config.get('asr', {}).get('longform_mode', defaults_asr.longform_mode),
         longform_threshold_seconds=file_config.get('asr', {}).get(
             'longform_threshold_seconds', defaults_asr.longform_threshold_seconds
         ),
@@ -202,9 +201,7 @@ def build_app_config(
         enabled=(
             diarization_enabled
             if diarization_enabled is not None
-            else file_config.get('diarization', {}).get(
-                'enabled', defaults_diarization.enabled
-            )
+            else file_config.get('diarization', {}).get('enabled', defaults_diarization.enabled)
         ),
         hf_token=file_config.get('diarization', {}).get('hf_token')
         or env_config['diarization']['hf_token'],
@@ -239,4 +236,3 @@ def build_app_config(
         normalization=normalization_cfg,
         export=ExportConfig(output_dir=output_dir, formats=formats),
     )
-

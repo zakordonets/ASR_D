@@ -44,7 +44,7 @@ def test_openrouter_provider_uses_openrouter_client(monkeypatch) -> None:
         return client
 
     monkeypatch.setattr(
-        'asr_cli.providers.openrouter.provider.OpenAICompatibleClient',
+        'asr_cli.providers.base.normalization_provider.OpenAICompatibleClient',
         factory,
     )
 

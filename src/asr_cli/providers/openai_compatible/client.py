@@ -110,9 +110,7 @@ class OpenAICompatibleClient:
                 )
             ]
 
-        numbered_input = '\n'.join(
-            f'[{i + 1}] {text}' for i, text in enumerate(texts)
-        )
+        numbered_input = '\n'.join(f'[{i + 1}] {text}' for i, text in enumerate(texts))
         request_kwargs = {}
         if reasoning_enabled is not None:
             request_kwargs['extra_body'] = {'reasoning': {'enabled': reasoning_enabled}}
@@ -126,7 +124,8 @@ class OpenAICompatibleClient:
                         'content': (
                             'You normalize transcript text. '
                             'You will receive numbered transcript segments. '
-                            'Return each normalized segment on its own line with the same numbering. '
+                            'Return each normalized segment on its own line '
+                            'with the same numbering. '
                             'Example input:\n'
                             '[1] hello world\n[2] foo bar\n'
                             'Example output:\n'

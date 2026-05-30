@@ -1,4 +1,4 @@
-﻿import json
+import json
 
 from asr_cli.core.models import TranscriptDocument, TranscriptSegment
 from asr_cli.io.exporters.json import JsonWriter

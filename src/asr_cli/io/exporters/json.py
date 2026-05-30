@@ -8,13 +8,12 @@ from asr_cli.utils.json import to_jsonable
 
 
 class JsonWriter:
-    extension = "json"
+    extension = 'json'
 
     def write(self, document: TranscriptDocument, destination: Path) -> Path:
         payload = to_jsonable(document)
         destination.write_text(
-            json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
+            json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
+            encoding='utf-8',
         )
         return destination
-

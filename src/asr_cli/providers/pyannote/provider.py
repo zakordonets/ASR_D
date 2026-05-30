@@ -29,9 +29,7 @@ class PyannoteDiarizationProvider:
         except Exception as exc:
             raise ProviderError(f'Failed to initialize pyannote pipeline: {exc}') from exc
 
-    def diarize(
-        self, media: PreparedMedia, config: DiarizationConfig
-    ) -> list[SpeakerTurn]:
+    def diarize(self, media: PreparedMedia, config: DiarizationConfig) -> list[SpeakerTurn]:
         try:
             waveform, sample_rate = self._torchaudio.load(str(media.prepared_path))
             diarization_output = self._pipeline(

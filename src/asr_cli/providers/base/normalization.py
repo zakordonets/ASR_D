@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from typing import Protocol
 
@@ -16,5 +16,4 @@ class NormalizationProvider(Protocol):
         config: NormalizationConfig,
         language: str,
         progress_listener: ProgressListener | None = None,
-    ) -> TranscriptDocument:
-        ...
+    ) -> TranscriptDocument: ...

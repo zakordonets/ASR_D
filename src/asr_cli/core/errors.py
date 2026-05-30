@@ -24,4 +24,3 @@ class ExportError(AppError):
 
 class CombineProcessingError(AppError):
     """Raised when combined mode fails as a whole."""
-

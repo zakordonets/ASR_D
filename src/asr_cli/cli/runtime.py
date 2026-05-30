@@ -1,4 +1,4 @@
-﻿from __future__ import annotations
+from __future__ import annotations
 
 from asr_cli.core.registry import build_default_registry
 from asr_cli.io.ffmpeg import FfmpegPreprocessor
