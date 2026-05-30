@@ -14,17 +14,16 @@ def assign_speakers(
 ) -> TranscriptDocument:
     if not speaker_turns:
         return document
-    updated_segments = [
-        replace(
-            segment,
-            speaker=_best_speaker(segment, speaker_turns),
-            words=[
-                replace(word, speaker=_best_speaker(segment, speaker_turns))
-                for word in segment.words
-            ],
+    updated_segments = []
+    for segment in document.segments:
+        speaker = _best_speaker(segment, speaker_turns)
+        updated_segments.append(
+            replace(
+                segment,
+                speaker=speaker,
+                words=[replace(word, speaker=speaker) for word in segment.words],
+            )
         )
-        for segment in document.segments
-    ]
     return replace(document, segments=updated_segments, speaker_turns=speaker_turns)
 
 

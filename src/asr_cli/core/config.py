@@ -67,6 +67,13 @@ def load_config_file(path: Path | None) -> dict:
 
 
 def load_dotenv(dotenv_path: Path | None = None) -> dict[str, str]:
+    """Parse a .env file and apply values to os.environ.
+
+    Uses os.environ.setdefault — existing environment variables are NOT
+    overridden. Returns the parsed key-value dict (empty if file missing).
+
+    Side effect: modifies os.environ for keys not already present.
+    """
     path = dotenv_path or Path('.env')
     if not path.exists() or not path.is_file():
         return {}
